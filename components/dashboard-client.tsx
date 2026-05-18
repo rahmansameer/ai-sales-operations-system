@@ -49,6 +49,8 @@ export default function DashboardClient() {
     revalidateOnFocus: true,
   });
 
+  console.log(leads);
+
   const [selectedLead, setSelectedLead] = useState<any>(null);
 
   const [search, setSearch] = useState("");
