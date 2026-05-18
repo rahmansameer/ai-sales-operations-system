@@ -20,7 +20,7 @@ import {
   verticalListSortingStrategy,
 } from "@dnd-kit/sortable";
 
-import { useDroppable } from "@dnd-kit/core";
+import type { DragEndEvent } from "@dnd-kit/core";
 
 const fetcher = async (url: string) => {
   const res = await fetch(url);
@@ -36,6 +36,19 @@ async function approveProposal(id: string) {
     },
     body: JSON.stringify({
       id,
+    }),
+  });
+}
+
+async function updateLeadStatus(id: string, status: string) {
+  await fetch("/api/update-status", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      id,
+      status,
     }),
   });
 }
@@ -69,6 +82,20 @@ export default function DashboardClient() {
   ).length;
 
   const pipelineColumns = ["New", "Qualified", "Proposal Sent", "Approved"];
+
+  async function handleDragEnd(event: DragEndEvent) {
+    const { active, over } = event;
+
+    if (!over) return;
+
+    const leadId = String(active.id);
+
+    const newStatus = String(over.id);
+
+    await updateLeadStatus(leadId, newStatus);
+
+    mutate();
+  }
 
   const filteredLeads = leads.filter((lead: any) => {
     const matchesSearch =
@@ -216,7 +243,10 @@ export default function DashboardClient() {
           </div>
         </div>
 
-        <DndContext collisionDetection={closestCenter}>
+        <DndContext
+          collisionDetection={closestCenter}
+          onDragEnd={handleDragEnd}
+        >
           <div className="grid grid-cols-1 lg:grid-cols-4 gap-4">
             {pipelineColumns.map((column) => {
               const columnLeads = filteredLeads.filter(
@@ -224,7 +254,11 @@ export default function DashboardClient() {
               );
 
               return (
-                <div key={column} className="bg-[#f0f0f0] rounded-xl p-3">
+                <div
+                  key={column}
+                  id={column}
+                  className="bg-[#f0f0f0] rounded-xl p-3 min-h-[400px]"
+                >
                   <div className="flex items-center justify-between mb-4 px-1">
                     <h2 className="text-sm font-semibold tracking-tight">
                       {column}
