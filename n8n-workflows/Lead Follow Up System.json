@@ -1,0 +1,435 @@
+{
+  "name": "Lead Follow Up System",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "triggerAtHour": 10
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.3,
+      "position": [
+        0,
+        0
+      ],
+      "id": "70e4b7a1-5cc5-4f19-8457-8bcb4f799c57",
+      "name": "Schedule Trigger"
+    },
+    {
+      "parameters": {
+        "operation": "search",
+        "base": {
+          "__rl": true,
+          "value": "apprfRXkGgL3F1FfR",
+          "mode": "list",
+          "cachedResultName": "AI Business OS CRM",
+          "cachedResultUrl": "https://airtable.com/apprfRXkGgL3F1FfR"
+        },
+        "table": {
+          "__rl": true,
+          "value": "tblA95vQ7rJICMAG1",
+          "mode": "list",
+          "cachedResultName": "Leads",
+          "cachedResultUrl": "https://airtable.com/apprfRXkGgL3F1FfR/tblA95vQ7rJICMAG1"
+        },
+        "filterByFormula": "{Follow Up Status} = 'Pending'",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.airtable",
+      "typeVersion": 2.2,
+      "position": [
+        208,
+        0
+      ],
+      "id": "6a1533cf-e12b-4732-af4a-8adf25db3474",
+      "name": "Find Pending Leads",
+      "credentials": {
+        "airtableTokenApi": {
+          "id": "35GIKeuxY85vpnuJ",
+          "name": "Airtable"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=You are a professional sales assistant.\n\nWrite a short follow-up email.\n\nLead Name: {{ $json.fields.Name }}\n\nCompany: {{ $json.fields.Company }}\n\nOriginal Request:\n{{ $json.fields.Message }}\n\nRules:\n- Friendly\n- Short\n- Human sounding\n- Ask if they are still interested\n- No subject line",
+        "batching": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.9,
+      "position": [
+        416,
+        0
+      ],
+      "id": "ad51bc1f-5015-40d3-81cd-1c4458e82ac6",
+      "name": "AI Follow Up Writer"
+    },
+    {
+      "parameters": {
+        "model": "llama-3.3-70b-versatile",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGroq",
+      "typeVersion": 1,
+      "position": [
+        368,
+        208
+      ],
+      "id": "356366f0-d454-452b-9d99-4eb999c9b36a",
+      "name": "Groq Chat Model",
+      "credentials": {
+        "groqApi": {
+          "id": "hAp1YAW0nZDl6TbZ",
+          "name": "Groq"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sendTo": "={{ $('Find Pending Leads').item.json.fields.Email }}",
+        "subject": "Following up on your inquiry",
+        "message": "={{ $('AI Follow Up Writer').item.json.text }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        768,
+        0
+      ],
+      "id": "b037898e-1b59-4c04-aaba-8b2f371ddfbb",
+      "name": "Send Follow Up Email",
+      "webhookId": "7778d40f-c871-4079-887c-e432ccd2ffbc",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "Q5SKw35Quu9zeER7",
+          "name": "Gmail"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "base": {
+          "__rl": true,
+          "value": "apprfRXkGgL3F1FfR",
+          "mode": "list",
+          "cachedResultName": "AI Business OS CRM",
+          "cachedResultUrl": "https://airtable.com/apprfRXkGgL3F1FfR"
+        },
+        "table": {
+          "__rl": true,
+          "value": "tblA95vQ7rJICMAG1",
+          "mode": "list",
+          "cachedResultName": "Leads",
+          "cachedResultUrl": "https://airtable.com/apprfRXkGgL3F1FfR/tblA95vQ7rJICMAG1"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "id": "={{ $('Find Pending Leads').item.json.id }}",
+            "Follow Up Status": "Sent",
+            "Follow Up Count": 1
+          },
+          "matchingColumns": [
+            "id"
+          ],
+          "schema": [
+            {
+              "id": "id",
+              "displayName": "id",
+              "required": false,
+              "defaultMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": false
+            },
+            {
+              "id": "Name",
+              "displayName": "Name",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Email",
+              "displayName": "Email",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Company",
+              "displayName": "Company",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Message",
+              "displayName": "Message",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Status",
+              "displayName": "Status",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "options",
+              "options": [
+                {
+                  "name": "New",
+                  "value": "New"
+                },
+                {
+                  "name": "Qualified",
+                  "value": "Qualified"
+                },
+                {
+                  "name": "Closed",
+                  "value": "Closed"
+                },
+                {
+                  "name": "Done",
+                  "value": "Done"
+                }
+              ],
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Lead Score",
+              "displayName": "Lead Score",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "number",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Service Type",
+              "displayName": "Service Type",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Lead Quality",
+              "displayName": "Lead Quality",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "options",
+              "options": [
+                {
+                  "name": "High",
+                  "value": "High"
+                },
+                {
+                  "name": "Medium",
+                  "value": "Medium"
+                },
+                {
+                  "name": "Low",
+                  "value": "Low"
+                }
+              ],
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "AI Summary",
+              "displayName": "AI Summary",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Created At",
+              "displayName": "Created At",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": true
+            },
+            {
+              "id": "Follow Up Status",
+              "displayName": "Follow Up Status",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "options",
+              "options": [
+                {
+                  "name": "Pending",
+                  "value": "Pending"
+                },
+                {
+                  "name": "Sent",
+                  "value": "Sent"
+                },
+                {
+                  "name": "Replied",
+                  "value": "Replied"
+                }
+              ],
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Follow Up Count",
+              "displayName": "Follow Up Count",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "number",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Last Follow Up",
+              "displayName": "Last Follow Up",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "dateTime",
+              "readOnly": false,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.airtable",
+      "typeVersion": 2.2,
+      "position": [
+        976,
+        0
+      ],
+      "id": "72e63686-66a2-42a5-a962-56557409d2e4",
+      "name": "Update record",
+      "credentials": {
+        "airtableTokenApi": {
+          "id": "35GIKeuxY85vpnuJ",
+          "name": "Airtable"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Schedule Trigger": {
+      "main": [
+        [
+          {
+            "node": "Find Pending Leads",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Find Pending Leads": {
+      "main": [
+        [
+          {
+            "node": "AI Follow Up Writer",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Groq Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Follow Up Writer",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Follow Up Writer": {
+      "main": [
+        [
+          {
+            "node": "Send Follow Up Email",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send Follow Up Email": {
+      "main": [
+        [
+          {
+            "node": "Update record",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "e22f822c-af69-44f1-940f-2aa60e62fac2",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "d703d0145caf824abd621d4502cb9874dcc28ce0caa92d308775a946af0d518a"
+  },
+  "id": "8WUnrnZMcrtWDxzm",
+  "tags": []
+}

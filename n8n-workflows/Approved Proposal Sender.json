@@ -1,0 +1,158 @@
+{
+  "name": "Approved Proposal Sender",
+  "nodes": [
+    {
+      "parameters": {
+        "sendTo": "={{ $json.email }}",
+        "subject": "Your AI Automation Proposal",
+        "emailType": "text",
+        "message": "=Hello {{ $json.name }}\n\nThank you for your interest.\n\nWe reviewed your requirements and prepared a proposal for your business automation needs.\n\nOur team would love to discuss the next steps with you.\n\nBest regards,\nSameer",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        544,
+        0
+      ],
+      "id": "6bd4933e-9e51-4a85-ac3d-fd85e63197af",
+      "name": "Send Approved Proposal",
+      "webhookId": "57669010-9109-43fa-b903-d7211cc7c51c",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "Q5SKw35Quu9zeER7",
+          "name": "Gmail"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "approve-proposal",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        96,
+        0
+      ],
+      "id": "88a692cf-bace-4a2b-8c46-9995d68e3974",
+      "name": "Webhook",
+      "webhookId": "554b0bc1-d265-4f49-a224-6f6bfd97c12c"
+    },
+    {
+      "parameters": {
+        "operation": "get",
+        "tableId": "leads",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "id",
+              "keyValue": "={{ $('Webhook').item.json.body.id }}"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        320,
+        0
+      ],
+      "id": "7ab26067-2f85-4a55-b1f5-7b2db23a0378",
+      "name": "Get a row",
+      "credentials": {
+        "supabaseApi": {
+          "id": "UI96MtPNcbV6KIIn",
+          "name": "ai-sales-os"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "tableId": "leads",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "id",
+              "condition": "eq",
+              "keyValue": "={{ $('Get a row').item.json.id }}"
+            }
+          ]
+        },
+        "fieldsUi": {
+          "fieldValues": [
+            {
+              "fieldId": "proposal_status",
+              "fieldValue": "Sent"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        752,
+        0
+      ],
+      "id": "4c58a416-02d7-4920-b9c1-1807ac5ea297",
+      "name": "Update a row",
+      "credentials": {
+        "supabaseApi": {
+          "id": "UI96MtPNcbV6KIIn",
+          "name": "ai-sales-os"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Send Approved Proposal": {
+      "main": [
+        [
+          {
+            "node": "Update a row",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Get a row",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get a row": {
+      "main": [
+        [
+          {
+            "node": "Send Approved Proposal",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "5cd62614-16b4-4e76-822e-6840b01b7fc4",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "d703d0145caf824abd621d4502cb9874dcc28ce0caa92d308775a946af0d518a"
+  },
+  "id": "P0FzyTSdbKhmYF9C",
+  "tags": []
+}
