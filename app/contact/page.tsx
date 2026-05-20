@@ -1,19 +1,21 @@
 "use client";
 
 import { FormEvent, useState } from "react";
+import { Send } from "lucide-react";
+
+type Status = "idle" | "success" | "error";
 
 export default function ContactForm() {
   const [loading, setLoading] = useState(false);
-  const [success, setSuccess] = useState(false);
+  const [status, setStatus] = useState<Status>("idle");
 
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-
+    const form = e.currentTarget;
     setLoading(true);
-    setSuccess(false);
+    setStatus("idle");
 
-    const formData = new FormData(e.currentTarget);
-
+    const formData = new FormData(form);
     const payload = {
       name: formData.get("name"),
       email: formData.get("email"),
@@ -27,65 +29,69 @@ export default function ContactForm() {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
+            "ngrok-skip-browser-warning": "true",
           },
           body: JSON.stringify(payload),
         },
       );
 
-      setSuccess(true);
-
-      e.currentTarget.reset();
-    } catch (error) {
-      console.log(error);
+      setStatus("success");
+      form.reset();
+    } catch (err) {
+      console.log(err);
+      setStatus("error");
+    } finally {
+      setLoading(false);
     }
-
-    setLoading(false);
   };
 
-  return (
-    <section className="min-h-screen bg-[#f6f6f6] flex items-center justify-center px-6 py-10">
-      <div className="w-full max-w-2xl bg-white border border-gray-200 rounded-2xl p-8 md:p-10 shadow-sm">
-        <h1 className="text-3xl md:text-4xl font-semibold text-black mb-8">
-          Contact Form
-        </h1>
+  const buttonLabel = loading
+    ? "Sending..."
+    : status === "success"
+      ? "Message sent"
+      : status === "error"
+        ? "Something went wrong"
+        : "Send message";
 
-        <form onSubmit={handleSubmit} className="space-y-5">
+  return (
+    <section className="min-h-screen bg-[#f5f5f4] flex items-center justify-center px-4 py-10">
+      <div className="w-full max-w-[520px] bg-white border border-black/[0.07] rounded-xl p-10">
+        <h2 className="text-[22px] font-medium tracking-tight text-zinc-900 mb-1.5">
+          Get in touch
+        </h2>
+        <p className="text-[15px] text-zinc-500 leading-relaxed mb-7">
+          We'll get back to you within 24 hours.
+        </p>
+
+        <form onSubmit={handleSubmit} className="space-y-4">
           <input
             type="text"
             name="name"
             required
             placeholder="Name"
-            className="w-full h-14 px-5 rounded-xl border border-gray-300 bg-white text-black outline-none focus:border-black transition"
+            className="w-full h-12 px-4 rounded-lg border border-black/[0.08] bg-zinc-50 text-[15px] text-zinc-900 placeholder:text-zinc-400 outline-none focus:border-black/25 transition"
           />
-
           <input
             type="email"
             name="email"
             required
             placeholder="Email"
-            className="w-full h-14 px-5 rounded-xl border border-gray-300 bg-white text-black outline-none focus:border-black transition"
+            className="w-full h-12 px-4 rounded-lg border border-black/[0.08] bg-zinc-50 text-[15px] text-zinc-900 placeholder:text-zinc-400 outline-none focus:border-black/25 transition"
           />
-
           <textarea
             name="message"
             required
             rows={6}
             placeholder="Message"
-            className="w-full px-5 py-4 rounded-xl border border-gray-300 bg-white text-black outline-none resize-none focus:border-black transition"
+            className="w-full px-4 py-3 rounded-lg border border-black/[0.08] bg-zinc-50 text-[15px] text-zinc-900 placeholder:text-zinc-400 outline-none resize-none focus:border-black/25 transition leading-relaxed"
           />
-
-          {success && (
-            <div className="w-full px-4 py-3 rounded-xl text-sm font-medium border border-green-200 bg-green-50 text-green-700">
-              Message sent successfully.
-            </div>
-          )}
-
           <button
             type="submit"
-            disabled={loading}
-            className="w-full h-14 bg-black text-white rounded-xl font-medium transition hover:opacity-90 disabled:opacity-50"
+            disabled={loading || status === "success"}
+            className="w-full cursor-pointer h-12 bg-zinc-900 hover:bg-zinc-700 disabled:opacity-60 disabled:cursor-not-allowed text-white rounded-lg text-[15px] font-medium flex items-center justify-center gap-2 transition"
           >
-            {loading ? "Sending..." : "Submit"}
+            <Send className="w-4 h-4" />
+            {buttonLabel}
           </button>
         </form>
       </div>
